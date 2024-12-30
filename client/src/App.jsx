@@ -25,9 +25,9 @@ function App() {
     policy_bind_date: '',
     policy_state: '',
     policy_csl: '',
-    policy_deductable: '',
-    policy_annual_premium: '',
-    umbrella_limit: '',
+    policy_deductable: 0,
+    policy_annual_premium: 0,
+    umbrella_limit: 0,
     insured_sex: '',
     incident_date: '',
     incident_type: '',
@@ -37,17 +37,21 @@ function App() {
     incident_state: '',
     incident_city: '',
     incident_location: '',
-    bodily_injuries: '',
-    witnesses: '',
+    bodily_injuries: 0,
+    witnesses: 0,
     police_report_available: '',
-    total_claim_amount: '',
-    injury_claim: '',
-    property_claim: '',
-    vehicle_claim: '',
+    total_claim_amount: 0,
+    injury_claim: 0,
+    property_damage: '',
+    property_claim: 0,
+    vehicle_claim: 0,
     auto_make: '',
     auto_model: '',
-    auto_year: ''
+    auto_year: 0
   });
+
+  const result = ["Y", "N"];
+  const [output, setOutput] = useState(false);
   const [prediction, setPrediction] = useState(null);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -58,23 +62,17 @@ function App() {
 
   const fetchAnalytics = async () => {
     try {
-
       const response = await axios.get('http://localhost:8000/api/analytics');
       setAnalytics(response.data);
     } catch (error) {
       console.error('Error fetching analytics:', error);
     }
-    
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
-    // console.log(typeof formData.policy_bind_date);
-    // console.log(typeof formData.policy_state);
-    // console.log(typeof formData.total_claim_amount);
-    // console.log(typeof formData.incident_type);
+    setOutput(!output);
     try {
       const response = await axios.post('http://localhost:8000/api/predict', formData);
       setPrediction(response.data);
@@ -86,17 +84,12 @@ function App() {
   };
 
   const handleInputChange = (e) => {
-
-
-    const {name,value} = e.target;
-    if(name==="total_claim_amount"){
-      setFormData({...formData,[name]:parseInt(value)});
-    }else{
-      setFormData({ ...formData, [e.target.name]: e.target.value });
-    }
-
-
-    
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]:
+        typeof prevData[name] === 'number' ? parseFloat(value) || 0 : value
+    }));
   };
 
   return (
@@ -120,7 +113,7 @@ function App() {
                   <div className="bg-red-50 p-4 rounded">
                     <h3 className="text-sm text-gray-600">Fraud Rate</h3>
                     <p className="text-2xl font-bold">
-             {((analytics.fraudulent_claims * 100)/analytics.total_claims).toFixed(1)}%
+                      {((analytics.fraudulent_claims * 100) / analytics.total_claims).toFixed(1)}%
                     </p>
                   </div>
                 </div>
@@ -130,11 +123,13 @@ function App() {
                   <Bar
                     data={{
                       labels: Object.keys(analytics.fraud_by_make),
-                      datasets: [{
-                        label: 'Fraudulent Claims',
-                        data: Object.values(analytics.fraud_by_make),
-                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                      }]
+                      datasets: [
+                        {
+                          label: 'Fraudulent Claims',
+                          data: Object.values(analytics.fraud_by_make),
+                          backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        },
+                      ],
                     }}
                   />
                 </div>
@@ -147,41 +142,23 @@ function App() {
             <h2 className="text-xl font-semibold mb-4">Submit New Claim</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <input
-                  type="date"
-                  name="policy_bind_date"
-                  placeholder="Policy Bind Date"
-                  onChange={handleInputChange}
-                  className="p-2 border rounded"
-                  required
-                />
-                <input
-                  type="text"
-                  name="policy_state"
-                  placeholder="Policy State"
-                  onChange={handleInputChange}
-                  className="p-2 border rounded"
-                  required
-                />
-                <input
-                  type="number"
-                  name="total_claim_amount"
-                  placeholder="Total Claim Amount"
-                  onChange={handleInputChange}
-                  className="p-2 border rounded"
-                  required
-                />
-                <input
-                  type="text"
-                  name="incident_type"
-                  placeholder="Incident Type"
-                  onChange={handleInputChange}
-                  className="p-2 border rounded"
-                  required
-                />
-                {/* Add more form fields as needed */}
+                {Object.keys(formData).map((key) => (
+                  <div key={key} className="flex flex-col">
+                    <label className="text-sm text-gray-600">
+                      {key} ({typeof formData[key]})
+                    </label>
+                    <input
+                      type={typeof formData[key] === 'number' ? 'number' : 'text'}
+                      name={key}
+                      value={formData[key]}
+                      onChange={handleInputChange}
+                      className="p-2 border rounded"
+
+                    />
+                  </div>
+                ))}
               </div>
-              
+
               <button
                 type="submit"
                 disabled={loading}
@@ -190,15 +167,25 @@ function App() {
                 {loading ? 'Analyzing...' : 'Analyze Claim'}
               </button>
             </form>
+            {output && (
+              <div>
+                <p className="text-[100px] text-black">{result[Math.floor(Math.random() * result.length)]}</p>
+              </div>
+            )}
 
             {prediction && (
-              <div className={`mt-4 p-4 rounded ${
-                prediction.is_fraudulent ? 'bg-red-100' : 'bg-green-100'
-              }`}>
+              <div
+                className={`mt-4 p-4 rounded ${prediction.is_fraudulent ? 'bg-red-100' : 'bg-green-100'
+                  }`}
+              >
                 <h3 className="font-semibold mb-2">Prediction Result</h3>
-                <p className="mb-2">Fraud Probability: {(prediction.fraud_probability * 100).toFixed(1)}%</p>
-                <p className="mb-4">Status: {prediction.is_fraudulent ? 'Suspicious' : 'Legitimate'}</p>
-                
+                <p className="mb-2">
+                  Fraud Probability: {(prediction.fraud_probability * 100).toFixed(1)}%
+                </p>
+                <p className="mb-4">
+                  Status: {prediction.is_fraudulent ? 'Suspicious' : 'Legitimate'}
+                </p>
+
                 {prediction.risk_factors.length > 0 && (
                   <div>
                     <h4 className="font-semibold mb-2">Risk Factors:</h4>
