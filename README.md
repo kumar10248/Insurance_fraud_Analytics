@@ -281,41 +281,7 @@ Predicts the probability of fraud in an insurance claim.
     }
     ```
 
-## Project Structure
 
-```
-insurance-fraud-detection/
-├── app/
-│   ├── __init__.py
-│   ├── main.py
-│   ├── models.py
-│   └── services/
-│       └── ml_service.py
-├── client/
-│   ├── .gitignore
-│   ├── eslint.config.js
-│   ├── index.html
-│   ├── package.json
-│   ├── postcss.config.js
-│   ├── public/
-│   ├── README.md
-│   ├── src/
-│   │   ├── App.jsx
-│   │   ├── assets/
-│   │   ├── index.css
-│   │   └── main.jsx
-│   ├── tailwind.config.js
-│   └── vite.config.js
-├── insurance_claims.csv
-├── model.ipynb
-├── model.py
-└── models/
-    ├── best_model.keras
-    ├── fraud_model.keras
-    ├── label_encoders.pkl
-    ├── scaler.pkl
-    └── target_encoder.pkl
-```
 
 ## Demo Video
 
